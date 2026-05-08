@@ -1,0 +1,61 @@
+@using Sandbox;
+@using Sandbox.UI;
+@inherits PanelComponent
+@namespace Sandbox
+
+<root>
+	<div class="title">@MyStringValue</div>
+</root>
+
+@code
+{
+	[Property] public GameObject Marker {get;set;}
+	[Property] public GameObject WayPoint {get;set;}
+	[Property, TextArea] public string MyStringValue { get; set; } = "Hello World!";
+
+
+	protected override void OnUpdate()
+	{
+		base.OnUpdate();
+		// 1. Get the camera from the current scene
+		var cam = Scene.Camera;
+		if ( cam == null ) return;
+		@* Log.Info( $"Mouse Position: {Mouse.Position}" ); *@
+
+		var ray = cam.ScreenPixelToRay( Mouse.Position ); // mouse position works. screen
+
+		// Run the trace
+		var trace = Scene.Trace
+				.Ray( ray, 2000f )
+				// .IgnoreGameObject( GameObject )
+				// .IgnoreGameObject( Player )
+				.IgnoreGameObject( Marker )
+				.Run();
+
+		
+		if ( trace.Hit )
+    {
+			@* Log.Info( "hit.." ); *@
+				if ( Marker != null )
+					Marker.WorldPosition = trace.EndPosition;
+			if(Input.Pressed("Attack1")){
+				Log.Info( "Move???" );
+
+				foreach ( var agent in Scene.GetAllComponents<NavMeshAgent>() )
+				{
+					@* agent.MoveTo( WorldPosition ); *@
+					agent.MoveTo( trace.EndPosition );
+					if(WayPoint !=null){
+						WayPoint.WorldPosition = trace.EndPosition;
+					}
+				}
+			}
+    }
+
+	} 
+
+	/// <summary>
+	/// the hash determines if the system should be rebuilt. If it changes, it will be rebuilt
+	/// </summary>
+	protected override int BuildHash() => System.HashCode.Combine( MyStringValue );
+}
